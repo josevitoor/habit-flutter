@@ -48,7 +48,8 @@ class _HabitListScreenState extends State<HabitListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Meus Hábitos', style: TextStyle(color: Colors.white)),
+        title:
+            const Text('Meus Hábitos', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.black,
         actions: [
           IconButton(
@@ -78,7 +79,10 @@ class _HabitListScreenState extends State<HabitListScreen> {
               leading: Icon(habitIcon, color: Colors.white),
               title: Text(
                 habit['name'],
-                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +99,8 @@ class _HabitListScreenState extends State<HabitListScreen> {
                   LinearProgressIndicator(
                     value: isCompleted ? 1.0 : 0.0,
                     backgroundColor: Colors.grey,
-                    valueColor: AlwaysStoppedAnimation<Color>(isCompleted ? Colors.green : Colors.red),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                        isCompleted ? Colors.green : Colors.red),
                   )
                 ],
               ),
@@ -105,7 +110,8 @@ class _HabitListScreenState extends State<HabitListScreen> {
                   IconButton(
                     icon: const Icon(Icons.edit, color: Colors.white),
                     onPressed: () async {
-                      await Navigator.pushNamed(context, '/editHabit', arguments: habit);
+                      await Navigator.pushNamed(context, '/editHabit',
+                          arguments: habit);
                       _loadHabits();
                     },
                   ),
@@ -115,7 +121,8 @@ class _HabitListScreenState extends State<HabitListScreen> {
                   ),
                   Checkbox(
                     value: isCompleted,
-                    onChanged: (value) => _toggleCompletion(habit['id'], isCompleted),
+                    onChanged: (value) =>
+                        _toggleCompletion(habit['id'], isCompleted),
                     activeColor: Colors.green,
                   ),
                 ],
