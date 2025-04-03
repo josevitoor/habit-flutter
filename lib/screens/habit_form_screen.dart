@@ -22,10 +22,10 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
 
   final List<IconData> _icons = [
     FontAwesomeIcons.dumbbell,
-    FontAwesomeIcons.book,
-    FontAwesomeIcons.mugHot,
-    FontAwesomeIcons.bed,
-    FontAwesomeIcons.bolt,
+    FontAwesomeIcons.bookOpen,
+    FontAwesomeIcons.briefcase,
+    FontAwesomeIcons.gamepad,
+    FontAwesomeIcons.utensils,
     FontAwesomeIcons.circle,
   ];
 
@@ -36,9 +36,10 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
       _habitId = widget.habit!['id'];
       _nameController.text = widget.habit!['name'];
       _frequency = widget.habit!['frequency'];
-      _selectedTime = widget.habit!['time'] != null
-          ? _parseTime(widget.habit!['time'])
-          : null;
+      _selectedTime =
+          widget.habit!['time'] != null
+              ? _parseTime(widget.habit!['time'])
+              : null;
       _isCompleted = widget.habit!['isCompleted'] == 1;
       _selectedIconIndex = widget.habit!['icon'] ?? 5;
     }
@@ -100,7 +101,8 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                   labelText: 'Nome do Hábito',
                   labelStyle: TextStyle(color: Colors.white70),
                   enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white70)),
+                    borderSide: BorderSide(color: Colors.white70),
+                  ),
                 ),
                 style: const TextStyle(color: Colors.white),
                 validator: (value) => value!.isEmpty ? 'Informe um nome' : null,
@@ -109,13 +111,16 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
               DropdownButtonFormField<String>(
                 value: _frequency,
                 dropdownColor: Colors.black,
-                items: ['Diária', 'Semanal', 'Mensal'].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value,
-                        style: const TextStyle(color: Colors.white)),
-                  );
-                }).toList(),
+                items:
+                    ['Diária', 'Semanal', 'Mensal'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(
+                          value,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      );
+                    }).toList(),
                 onChanged: (newValue) {
                   setState(() {
                     _frequency = newValue!;
@@ -125,7 +130,8 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                   labelText: 'Frequência',
                   labelStyle: TextStyle(color: Colors.white70),
                   enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white70)),
+                    borderSide: BorderSide(color: Colors.white70),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -139,34 +145,82 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                   ),
                   TextButton(
                     onPressed: _pickTime,
-                    child: const Text('Selecionar Horário',
-                        style: TextStyle(color: Colors.blue)),
+                    child: const Text(
+                      'Selecionar Horário',
+                      style: TextStyle(color: Colors.blue),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               Wrap(
                 spacing: 10,
-                children: _icons.asMap().entries.map((entry) {
-                  final int idx = entry.key;
-                  final IconData icon = entry.value;
-                  return IconButton(
-                    icon: Icon(icon,
-                        color: _selectedIconIndex == idx
-                            ? Colors.blue
-                            : Colors.white70),
-                    onPressed: () {
-                      setState(() {
-                        _selectedIconIndex = idx;
-                      });
-                    },
-                  );
-                }).toList(),
+                children:
+                    _icons.asMap().entries.map((entry) {
+                      final int idx = entry.key;
+                      final IconData icon = entry.value;
+                      String tooltipMessage = '';
+                      switch (idx) {
+                        case 0:
+                          tooltipMessage = 'Exercício';
+                          break;
+                        case 1:
+                          tooltipMessage = 'Estudos';
+                          break;
+                        case 2:
+                          tooltipMessage = 'Trabalho';
+                          break;
+                        case 3:
+                          tooltipMessage = 'Lazer';
+                          break;
+                        case 4:
+                          tooltipMessage = 'Alimentação';
+                          break;
+                        case 5:
+                          tooltipMessage = 'Outros';
+                          break;
+                      }
+                      return Tooltip(
+                        message: tooltipMessage,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[800]!.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              spreadRadius: 1,
+                              blurRadius: 3,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        textStyle: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            icon,
+                            color:
+                                _selectedIconIndex == idx
+                                    ? Colors.blue
+                                    : Colors.white70,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _selectedIconIndex = idx;
+                            });
+                          },
+                        ),
+                      );
+                    }).toList(),
               ),
               const SizedBox(height: 16),
               CheckboxListTile(
-                title: const Text('Marcar como cumprido',
-                    style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  'Marcar como cumprido',
+                  style: TextStyle(color: Colors.white),
+                ),
                 value: _isCompleted,
                 onChanged: (value) {
                   setState(() {
