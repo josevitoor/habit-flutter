@@ -73,6 +73,36 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.dark().copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: Colors.blue.shade300,
+              secondary: Colors.grey.shade600,
+            ),
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: Colors.grey[900],
+              hourMinuteTextColor: Colors.white,
+              dayPeriodTextColor: Colors.white70,
+              dialTextColor: Colors.white,
+              entryModeIconColor: Colors.blue.shade300,
+              helpTextStyle: const TextStyle(color: Colors.white70),
+              inputDecorationTheme: const InputDecorationTheme(
+                border: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white70),
+                ),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12),
+              ),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blue.shade300,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
@@ -83,12 +113,23 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Colors.blue.shade300;
+    final secondaryColor = Colors.grey.shade600;
+    final backgroundColor = Colors.black;
+    final textColorPrimary = Colors.white;
+    final textColorSecondary = Colors.white70;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(_habitId == null ? 'Novo Hábito' : 'Editar Hábito'),
-        backgroundColor: Colors.black,
+        title: Text(
+          _habitId == null ? 'Novo Hábito' : 'Editar Hábito',
+          style: TextStyle(color: textColorPrimary),
+        ),
+        iconTheme: IconThemeData(color: primaryColor),
+        backgroundColor: backgroundColor,
+        elevation: 1,
       ),
-      backgroundColor: Colors.black,
+      backgroundColor: backgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -97,27 +138,30 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Nome do Hábito',
-                  labelStyle: TextStyle(color: Colors.white70),
+                  labelStyle: TextStyle(color: textColorSecondary),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white70),
+                    borderSide: BorderSide(color: textColorSecondary),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: primaryColor),
                   ),
                 ),
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: textColorPrimary),
                 validator: (value) => value!.isEmpty ? 'Informe um nome' : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _frequency,
-                dropdownColor: Colors.black,
+                dropdownColor: backgroundColor,
                 items:
                     ['Diária', 'Semanal', 'Mensal'].map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
                         child: Text(
                           value,
-                          style: const TextStyle(color: Colors.white),
+                          style: TextStyle(color: textColorPrimary),
                         ),
                       );
                     }).toList(),
@@ -126,28 +170,37 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                     _frequency = newValue!;
                   });
                 },
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Frequência',
-                  labelStyle: TextStyle(color: Colors.white70),
+                  labelStyle: TextStyle(color: textColorSecondary),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white70),
+                    borderSide: BorderSide(color: textColorSecondary),
                   ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: primaryColor),
+                  ),
+                  icon: Icon(Icons.repeat, color: secondaryColor),
                 ),
+                style: TextStyle(color: textColorPrimary),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Text(
-                    _selectedTime == null
-                        ? 'Horário: Não definido'
-                        : 'Horário: ${_selectedTime!.format(context)}',
-                    style: const TextStyle(color: Colors.white70),
+                  Icon(Icons.schedule, color: secondaryColor),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _selectedTime == null
+                          ? 'Horário: Não definido'
+                          : 'Horário: ${_selectedTime!.format(context)}',
+                      style: TextStyle(color: textColorSecondary),
+                    ),
                   ),
                   TextButton(
                     onPressed: _pickTime,
-                    child: const Text(
+                    child: Text(
                       'Selecionar Horário',
-                      style: TextStyle(color: Colors.blue),
+                      style: TextStyle(color: primaryColor),
                     ),
                   ),
                 ],
@@ -182,6 +235,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                       }
                       return Tooltip(
                         message: tooltipMessage,
+                        preferBelow: false,
                         decoration: BoxDecoration(
                           color: Colors.grey[800]!.withOpacity(0.9),
                           borderRadius: BorderRadius.circular(8),
@@ -203,8 +257,8 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                             icon,
                             color:
                                 _selectedIconIndex == idx
-                                    ? Colors.blue
-                                    : Colors.white70,
+                                    ? primaryColor
+                                    : textColorSecondary,
                           ),
                           onPressed: () {
                             setState(() {
@@ -217,9 +271,9 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
               ),
               const SizedBox(height: 16),
               CheckboxListTile(
-                title: const Text(
+                title: Text(
                   'Marcar como cumprido',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: textColorPrimary),
                 ),
                 value: _isCompleted,
                 onChanged: (value) {
@@ -227,13 +281,30 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                     _isCompleted = value ?? false;
                   });
                 },
-                activeColor: Colors.green,
+                activeColor: Colors.green.shade300,
+                checkColor: textColorPrimary,
+                tileColor: Colors.grey[900],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                controlAffinity: ListTileControlAffinity.leading,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _saveHabit,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                child: const Text('Salvar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: textColorPrimary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 2,
+                ),
+                child: const Text('Salvar', style: TextStyle(fontSize: 18)),
               ),
             ],
           ),

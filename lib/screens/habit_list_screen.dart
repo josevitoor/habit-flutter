@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../database/habit_database.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'category_habit_screen.dart';
 
 class HabitListScreen extends StatefulWidget {
   const HabitListScreen({super.key});
@@ -12,14 +13,23 @@ class HabitListScreen extends StatefulWidget {
 class _HabitListScreenState extends State<HabitListScreen> {
   List<Map<String, dynamic>> _habits = [];
 
-  final List<IconData> _icons = [
-    FontAwesomeIcons.dumbbell,
-    FontAwesomeIcons.bookOpen,
-    FontAwesomeIcons.briefcase,
-    FontAwesomeIcons.gamepad,
-    FontAwesomeIcons.utensils,
-    FontAwesomeIcons.circle,
+  final List<IconData> _allIcons = [
+    FontAwesomeIcons.dumbbell, // 0
+    FontAwesomeIcons.bookOpen, // 1
+    FontAwesomeIcons.briefcase, // 2
+    FontAwesomeIcons.gamepad, // 3
+    FontAwesomeIcons.utensils, // 4
+    FontAwesomeIcons.circle, // 5 (Outros)
   ];
+
+  final Map<int, String> _categoryNames = {
+    0: 'Exercícios',
+    1: 'Estudos',
+    2: 'Trabalho',
+    3: 'Lazer',
+    4: 'Alimentação',
+    5: 'Outros',
+  };
 
   @override
   void initState() {
@@ -34,28 +44,56 @@ class _HabitListScreenState extends State<HabitListScreen> {
     });
   }
 
-  Future<void> _toggleCompletion(int id, bool isCompleted) async {
-    await HabitDatabase.instance.updateHabitCompletion(id, !isCompleted);
-    _loadHabits();
+  Map<int, List<Map<String, dynamic>>> _groupHabitsByIcon() {
+    final grouped = <int, List<Map<String, dynamic>>>{};
+    for (final habit in _habits) {
+      final iconIndex = habit['icon'] ?? 5;
+      if (!grouped.containsKey(iconIndex)) {
+        grouped[iconIndex] = [];
+      }
+      grouped[iconIndex]!.add(habit);
+    }
+    return grouped;
   }
 
-  Future<void> _deleteHabit(int id) async {
-    await HabitDatabase.instance.deleteHabit(id);
-    _loadHabits();
+  void _navigateToCategoryHabits(int iconIndex) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => CategoryHabitScreen(
+              iconIndex: iconIndex,
+              iconData: _allIcons[iconIndex],
+              categoryName: _categoryNames[iconIndex] ?? 'Categoria',
+            ),
+      ),
+    );
+    if (result != null) {
+      _loadHabits();
+    } else {
+      _loadHabits();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Colors.blue.shade300;
+    final secondaryColor = Colors.grey.shade600;
+    final backgroundColor = Colors.black;
+    final textColorPrimary = Colors.white;
+    final textColorSecondary = Colors.white70;
+
+    final groupedHabits = _groupHabitsByIcon();
+    final uniqueIconIndices = groupedHabits.keys.toList();
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Meus Hábitos',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.black,
+        title: Text('Meus Hábitos', style: TextStyle(color: textColorPrimary)),
+        backgroundColor: backgroundColor,
+        elevation: 1,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add, color: Colors.white),
+            icon: Icon(Icons.add, color: primaryColor),
             onPressed: () async {
               final newHabit = await Navigator.pushNamed(context, '/addHabit');
               if (newHabit != null) _loadHabits();
@@ -63,77 +101,52 @@ class _HabitListScreenState extends State<HabitListScreen> {
           ),
         ],
       ),
-      backgroundColor: Colors.black,
+      backgroundColor: backgroundColor,
       body: ListView.builder(
-        itemCount: _habits.length,
+        itemCount: uniqueIconIndices.length,
         itemBuilder: (context, index) {
-          final habit = _habits[index];
-          final IconData habitIcon = _icons[habit['icon'] ?? 5];
-          final bool isCompleted = habit['isCompleted'] == 1;
+          final iconIndex = uniqueIconIndices[index];
+          final iconData = _allIcons[iconIndex];
+          final categoryName = _categoryNames[iconIndex] ?? 'Categoria';
+          final habitCount = groupedHabits[iconIndex]?.length ?? 0;
 
           return Card(
-            color: Colors.grey[900],
+            color: Colors.grey[850], // Tom de cinza mais claro que o fundo
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-            ),
+            ), // Bordas arredondadas
+            elevation: 1,
             child: ListTile(
-              leading: Icon(habitIcon, color: Colors.white),
+              leading: Icon(
+                iconData,
+                color: primaryColor,
+                size: 30,
+              ), // Ícone com cor primária
               title: Text(
-                habit['name'],
-                style: const TextStyle(
-                  color: Colors.white,
+                categoryName,
+                style: TextStyle(
+                  color: textColorPrimary,
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Frequência: ${habit['frequency']}',
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                  Text(
-                    'Horário: ${habit['time'] ?? 'Não definido'}',
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: isCompleted ? 1.0 : 0.0,
-                    backgroundColor: Colors.grey,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      isCompleted ? Colors.green : Colors.red,
-                    ),
-                  ),
-                ],
+              subtitle: Text(
+                '$habitCount hábito(s)',
+                style: TextStyle(color: textColorSecondary),
               ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.white),
-                    onPressed: () async {
-                      await Navigator.pushNamed(
-                        context,
-                        '/editHabit',
-                        arguments: habit,
-                      );
-                      _loadHabits();
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.redAccent),
-                    onPressed: () => _deleteHabit(habit['id']),
-                  ),
-                  Checkbox(
-                    value: isCompleted,
-                    onChanged:
-                        (value) => _toggleCompletion(habit['id'], isCompleted),
-                    activeColor: Colors.green,
-                  ),
-                ],
+              onTap: () {
+                _navigateToCategoryHabits(iconIndex);
+              },
+              trailing: Icon(
+                Icons.arrow_forward_ios,
+                color: textColorSecondary,
+                size: 20,
               ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              tileColor: Colors.grey[850],
             ),
           );
         },

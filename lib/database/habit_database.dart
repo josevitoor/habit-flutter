@@ -85,4 +85,9 @@ class HabitDatabase {
       await db.close();
     }
   }
+
+  Future<List<Map<String, dynamic>>> fetchHabitsByIcon(int iconIndex) async {
+    final db = await database;
+    return await db.query('habits', where: 'icon = ?', whereArgs: [iconIndex]);
+  }
 }
