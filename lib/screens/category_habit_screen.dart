@@ -1,3 +1,4 @@
+import 'package:HabitTools/models/habit.dart';
 import 'package:flutter/material.dart';
 import '../database/habit_database.dart';
 import 'package:percent_indicator/percent_indicator.dart';
@@ -19,7 +20,7 @@ class CategoryHabitScreen extends StatefulWidget {
 }
 
 class _CategoryHabitScreenState extends State<CategoryHabitScreen> {
-  List<Map<String, dynamic>> _categoryHabits = [];
+  List<Habit> _categoryHabits = [];
   double _completionPercentage = 0.0;
   int _completedCount = 0;
 
@@ -46,12 +47,12 @@ class _CategoryHabitScreenState extends State<CategoryHabitScreen> {
       return;
     }
     _completedCount =
-        _categoryHabits.where((habit) => habit['isCompleted'] == 1).length;
+        _categoryHabits.where((habit) => habit.isCompleted).length;
     _completionPercentage = _completedCount / _categoryHabits.length;
   }
 
   Future<void> _toggleCompletion(int id, bool isCompleted) async {
-    await HabitDatabase.instance.updateHabitCompletion(id, !isCompleted);
+    await HabitDatabase.instance.updateHabitCompletion(id, isCompleted);
     _loadCategoryHabits();
   }
 
@@ -60,10 +61,18 @@ class _CategoryHabitScreenState extends State<CategoryHabitScreen> {
     _loadCategoryHabits();
   }
 
+  final Map<int, Color> _categoryColors = {
+    0: Colors.greenAccent.shade400, // Exercícios
+    1: Colors.blueAccent.shade400, // Estudos
+    2: Colors.orangeAccent.shade400, // Trabalho
+    3: Colors.purpleAccent.shade400, // Lazer
+    4: Colors.redAccent.shade400, // Alimentação
+    5: Colors.grey.shade400, // Outros
+  };
+
   @override
   Widget build(BuildContext context) {
     final primaryColor = Colors.blue.shade300;
-    final secondaryColor = Colors.grey.shade600;
     final backgroundColor = Colors.grey[900]!;
     final textColorPrimary = Colors.white;
     final textColorSecondary = Colors.white70;
@@ -142,15 +151,16 @@ class _CategoryHabitScreenState extends State<CategoryHabitScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       itemBuilder: (context, index) {
                         final habit = _categoryHabits[index];
-                        final bool isCompleted = habit['isCompleted'] == 1;
+                        final bool isCompleted = habit.isCompleted;
                         final textColor =
                             isCompleted ? Colors.grey[600] : textColorPrimary;
                         final secondaryTextColor =
                             isCompleted ? Colors.grey[700] : Colors.grey;
+                        final categoryColor = _categoryColors[widget.iconIndex] ?? Colors.grey;
 
                         return Card(
                           color:
-                              isCompleted ? Colors.grey[850] : Colors.grey[800],
+                              isCompleted ? Colors.grey[850] : categoryColor.withOpacity(0.2),
                           margin: const EdgeInsets.symmetric(
                             vertical: 8,
                             horizontal: 16,
@@ -178,7 +188,7 @@ class _CategoryHabitScreenState extends State<CategoryHabitScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        habit['name'],
+                                        habit.name,
                                         style: TextStyle(
                                           color: textColor,
                                           fontSize: 18,
@@ -189,16 +199,16 @@ class _CategoryHabitScreenState extends State<CategoryHabitScreen> {
                                       Row(
                                         children: [
                                           Text(
-                                            'Frequência: ${habit['frequency']}',
+                                            'Frequência: ${habit.frequency}',
                                             style: TextStyle(
                                               color: secondaryTextColor,
                                               fontSize: 14,
                                             ),
                                           ),
                                           const SizedBox(width: 8),
-                                          if (habit['time'] != null)
+                                          if (habit.time != null)
                                             Text(
-                                              '(${habit['time']})',
+                                              '(${habit.time})',
                                               style: TextStyle(
                                                 color: secondaryTextColor,
                                                 fontSize: 14,
@@ -211,11 +221,11 @@ class _CategoryHabitScreenState extends State<CategoryHabitScreen> {
                                 ),
                                 Checkbox(
                                   value: isCompleted,
-                                  onChanged:
-                                      (value) => _toggleCompletion(
-                                        habit['id'],
-                                        isCompleted,
-                                      ),
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      _toggleCompletion(habit.id ?? 0, value);
+                                    }
+                                  },
                                   activeColor: primaryColor,
                                   checkColor: textColorPrimary,
                                 ),
@@ -229,7 +239,7 @@ class _CategoryHabitScreenState extends State<CategoryHabitScreen> {
                                         arguments: habit,
                                       ).then((_) => _loadCategoryHabits());
                                     } else if (value == 'delete') {
-                                      _deleteHabit(habit['id']);
+                                      _deleteHabit(habit.id ?? 0);
                                     }
                                   },
                                   itemBuilder:

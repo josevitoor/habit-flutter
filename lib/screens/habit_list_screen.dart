@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../database/habit_database.dart';
+import '../models/habit.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'category_habit_screen.dart';
 
@@ -11,15 +12,15 @@ class HabitListScreen extends StatefulWidget {
 }
 
 class _HabitListScreenState extends State<HabitListScreen> {
-  List<Map<String, dynamic>> _habits = [];
+  List<Habit> _habits = [];
 
   final List<IconData> _allIcons = [
-    FontAwesomeIcons.dumbbell, // 0
-    FontAwesomeIcons.bookOpen, // 1
-    FontAwesomeIcons.briefcase, // 2
-    FontAwesomeIcons.gamepad, // 3
-    FontAwesomeIcons.utensils, // 4
-    FontAwesomeIcons.circle, // 5 (Outros)
+    FontAwesomeIcons.dumbbell, // Exercícios
+    FontAwesomeIcons.bookOpen, // Estudos
+    FontAwesomeIcons.briefcase, // Trabalho
+    FontAwesomeIcons.gamepad, // Lazer
+    FontAwesomeIcons.utensils, // Alimentação
+    FontAwesomeIcons.circle, // Outros
   ];
 
   final Map<int, String> _categoryNames = {
@@ -29,6 +30,15 @@ class _HabitListScreenState extends State<HabitListScreen> {
     3: 'Lazer',
     4: 'Alimentação',
     5: 'Outros',
+  };
+
+  final Map<int, Color> _categoryColors = {
+    0: Colors.greenAccent.shade400, // Exercícios
+    1: Colors.blueAccent.shade400, // Estudos
+    2: Colors.orangeAccent.shade400, // Trabalho
+    3: Colors.purpleAccent.shade400, // Lazer
+    4: Colors.redAccent.shade400, // Alimentação
+    5: Colors.grey.shade400, // Outros
   };
 
   @override
@@ -44,10 +54,10 @@ class _HabitListScreenState extends State<HabitListScreen> {
     });
   }
 
-  Map<int, List<Map<String, dynamic>>> _groupHabitsByIcon() {
-    final grouped = <int, List<Map<String, dynamic>>>{};
+  Map<int, List<Habit>> _groupHabitsByIcon() {
+    final grouped = <int, List<Habit>>{};
     for (final habit in _habits) {
-      final iconIndex = habit['icon'] ?? 5;
+      final iconIndex = habit.iconIndex ?? 5;
       if (!grouped.containsKey(iconIndex)) {
         grouped[iconIndex] = [];
       }
@@ -60,12 +70,11 @@ class _HabitListScreenState extends State<HabitListScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) => CategoryHabitScreen(
-              iconIndex: iconIndex,
-              iconData: _allIcons[iconIndex],
-              categoryName: _categoryNames[iconIndex] ?? 'Categoria',
-            ),
+        builder: (context) => CategoryHabitScreen(
+          iconIndex: iconIndex,
+          iconData: _allIcons[iconIndex],
+          categoryName: _categoryNames[iconIndex] ?? 'Categoria',
+        ),
       ),
     );
     if (result != null) {
@@ -77,8 +86,6 @@ class _HabitListScreenState extends State<HabitListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Colors.blue.shade300;
-    final secondaryColor = Colors.grey.shade600;
     final backgroundColor = Colors.black;
     final textColorPrimary = Colors.white;
     final textColorSecondary = Colors.white70;
@@ -93,7 +100,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
         elevation: 1,
         actions: [
           IconButton(
-            icon: Icon(Icons.add, color: primaryColor),
+            icon: Icon(Icons.add, color: textColorPrimary),
             onPressed: () async {
               final newHabit = await Navigator.pushNamed(context, '/addHabit');
               if (newHabit != null) _loadHabits();
@@ -109,20 +116,24 @@ class _HabitListScreenState extends State<HabitListScreen> {
           final iconData = _allIcons[iconIndex];
           final categoryName = _categoryNames[iconIndex] ?? 'Categoria';
           final habitCount = groupedHabits[iconIndex]?.length ?? 0;
+          final categoryColor = _categoryColors[iconIndex] ?? Colors.grey;
 
           return Card(
-            color: Colors.grey[850], // Tom de cinza mais claro que o fundo
+            color: categoryColor.withOpacity(0.2),
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-            ), // Bordas arredondadas
-            elevation: 1,
+            ),
+            elevation: 2,
             child: ListTile(
-              leading: Icon(
-                iconData,
-                color: primaryColor,
-                size: 30,
-              ), // Ícone com cor primária
+              leading: CircleAvatar(
+                backgroundColor: categoryColor,
+                child: Icon(
+                  iconData,
+                  color: Colors.black,
+                  size: 24,
+                ),
+              ),
               title: Text(
                 categoryName,
                 style: TextStyle(
@@ -143,10 +154,6 @@ class _HabitListScreenState extends State<HabitListScreen> {
                 color: textColorSecondary,
                 size: 20,
               ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              tileColor: Colors.grey[850],
             ),
           );
         },

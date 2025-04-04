@@ -1,9 +1,16 @@
+import 'package:HabitTools/models/habit.dart';
 import 'package:flutter/material.dart';
 import '../database/habit_database.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tzdata;
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+FlutterLocalNotificationsPlugin();
 
 class HabitFormScreen extends StatefulWidget {
-  final Map<String, dynamic>? habit;
+  final Habit? habit;
 
   const HabitFormScreen({super.key, this.habit});
 
@@ -32,17 +39,31 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeNotifications();
     if (widget.habit != null) {
-      _habitId = widget.habit!['id'];
-      _nameController.text = widget.habit!['name'];
-      _frequency = widget.habit!['frequency'];
+      _habitId = widget.habit!.id;
+      _nameController.text = widget.habit!.name;
+      _frequency = widget.habit!.frequency;
       _selectedTime =
-          widget.habit!['time'] != null
-              ? _parseTime(widget.habit!['time'])
+          widget.habit!.time != null
+              ? _parseTime(widget.habit!.time!)
               : null;
-      _isCompleted = widget.habit!['isCompleted'] == 1;
-      _selectedIconIndex = widget.habit!['icon'] ?? 5;
+      _isCompleted = widget.habit!.isCompleted == 1;
+      _selectedIconIndex = widget.habit!.iconIndex ?? 5;
     }
+  }
+
+  Future<void> _initializeNotifications() async {
+    tzdata.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('America/Sao_Paulo'));
+
+    const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('app_icon');
+
+    final InitializationSettings initializationSettings =
+    InitializationSettings(android: initializationSettingsAndroid);
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
   TimeOfDay _parseTime(String time) {
@@ -52,18 +73,22 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
 
   void _saveHabit() async {
     if (_formKey.currentState!.validate()) {
-      final habit = {
-        'id': _habitId,
-        'name': _nameController.text,
-        'frequency': _frequency,
-        'time': _selectedTime != null ? _selectedTime!.format(context) : null,
-        'isCompleted': _isCompleted ? 1 : 0,
-        'icon': _selectedIconIndex,
-      };
+      final habit = Habit(
+        id: _habitId,
+        name: _nameController.text,
+        frequency: _frequency,
+        time: _selectedTime != null ? _selectedTime!.format(context) : null,
+        isCompleted: _isCompleted,
+        iconIndex: _selectedIconIndex,
+      );
+
       if (_habitId == null) {
         await HabitDatabase.instance.insertHabit(habit);
       } else {
         await HabitDatabase.instance.updateHabit(habit);
+      }
+      if (habit.time != null) {
+        scheduleNotification(habit.name, habit.time!);
       }
       Navigator.pop(context, habit);
     }
@@ -109,6 +134,47 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
         _selectedTime = picked;
       });
     }
+  }
+
+  Future<void> scheduleNotification(String habitName, String time) async {
+    final scheduledTime = _parseTimeToDateTime(time);
+
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    AndroidNotificationDetails(
+      'habit_notifications',
+      'Lembretes de Hábitos',
+      importance: Importance.high,
+      priority: Priority.high,
+      showWhen: false,
+    );
+
+    const NotificationDetails platformChannelSpecifics =
+    NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      0,
+      'Hora de completar um hábito!',
+      'Está na hora de fazer: $habitName',
+      scheduledTime,
+      platformChannelSpecifics,
+      androidScheduleMode: AndroidScheduleMode.exact,
+      payload: 'habito:$habitName',
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
+  tz.TZDateTime _parseTimeToDateTime(String time) {
+    final parts = time.split(':');
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+
+    final now = tz.TZDateTime.now(tz.local);
+    final scheduledTime = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+
+    if (scheduledTime.isBefore(now)) {
+      return scheduledTime.add(const Duration(days: 1));
+    }
+    return scheduledTime;
   }
 
   @override

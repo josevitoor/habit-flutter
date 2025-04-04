@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import '../models/habit.dart';
 
 class HabitDatabase {
   static final HabitDatabase instance = HabitDatabase._init();
@@ -44,14 +45,15 @@ class HabitDatabase {
     }
   }
 
-  Future<int> insertHabit(Map<String, dynamic> habit) async {
+  Future<int> insertHabit(Habit habit) async {
     final db = await instance.database;
-    return await db.insert('habits', habit);
+    return await db.insert('habits', habit.toMap());
   }
 
-  Future<List<Map<String, dynamic>>> fetchHabits() async {
+  Future<List<Habit>> fetchHabits() async {
     final db = await instance.database;
-    return await db.query('habits');
+    final List<Map<String, dynamic>> maps = await db.query('habits');
+    return maps.map((map) => Habit.fromMap(map)).toList();
   }
 
   Future<int> updateHabitCompletion(int id, bool isCompleted) async {
@@ -64,13 +66,13 @@ class HabitDatabase {
     );
   }
 
-  Future<int> updateHabit(Map<String, dynamic> habit) async {
+  Future<int> updateHabit(Habit habit) async {
     final db = await instance.database;
     return await db.update(
       'habits',
-      habit,
+      habit.toMap(),
       where: 'id = ?',
-      whereArgs: [habit['id']],
+      whereArgs: [habit.id],
     );
   }
 
@@ -86,8 +88,10 @@ class HabitDatabase {
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchHabitsByIcon(int iconIndex) async {
+  Future<List<Habit>> fetchHabitsByIcon(int iconIndex) async {
     final db = await database;
-    return await db.query('habits', where: 'icon = ?', whereArgs: [iconIndex]);
+    final List<Map<String, dynamic>> maps =
+    await db.query('habits', where: 'icon = ?', whereArgs: [iconIndex]);
+    return maps.map((map) => Habit.fromMap(map)).toList();
   }
 }

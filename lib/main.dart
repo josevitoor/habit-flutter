@@ -1,9 +1,36 @@
+import 'package:HabitTools/models/habit.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'screens/habit_list_screen.dart';
 import 'screens/habit_form_screen.dart';
-import 'screens/category_habit_screen.dart';
+import 'package:timezone/data/latest.dart' as tz;
 
-void main() {
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+FlutterLocalNotificationsPlugin();
+
+Future<void> initNotifications() async {
+  const AndroidInitializationSettings initializationSettingsAndroid =
+  AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  final InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+  );
+
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+}
+
+Future<void> _requestPermissions() async {
+  flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+      AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initNotifications();
+  await _requestPermissions();
+  tz.initializeTimeZones();
+  await Permission.scheduleExactAlarm.request().isGranted;
   runApp(const HabitTrackerApp());
 }
 
@@ -100,7 +127,7 @@ class HabitTrackerApp extends StatelessWidget {
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/editHabit') {
-          final habit = settings.arguments as Map<String, dynamic>?;
+          final habit = settings.arguments as Habit?;
           return MaterialPageRoute(
             builder: (context) => HabitFormScreen(habit: habit),
           );
